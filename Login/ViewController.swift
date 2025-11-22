@@ -1,0 +1,35 @@
+//
+//  ViewController.swift
+//  GuessChain
+//
+//  Created by Balaji Sundar on 11/17/25.
+//
+
+import UIKit
+
+class ViewController: UIViewController {
+    let firstScreen = LoginView()
+    
+    override func loadView() {
+        self.view = firstScreen
+    }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        var registerButton = firstScreen.registerButton
+        registerButton?.addTarget(self, action: #selector(registerButtonTapped), for: .touchUpInside)
+        
+        var loginButton = firstScreen.loginButton
+        loginButton?.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
+    }
+    
+    @objc func registerButtonTapped() {
+        navigationController?.pushViewController(RegisterViewController(), animated: true)
+    }
+    
+    @objc func loginButtonTapped() {
+        navigationController?.pushViewController(ViewProfileController(), animated: true)
+    }
+
+
+}
+
