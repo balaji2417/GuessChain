@@ -10,22 +10,9 @@
 		6C2CB66A2ECB5B4900D5E64A /* GuessChain.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GuessChain.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		6C2CB67C2ECB5B4A00D5E64A /* Exceptions for "GuessChain" folder in "GuessChain" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 6C2CB6692ECB5B4900D5E64A /* GuessChain */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6C2CB66C2ECB5B4900D5E64A /* GuessChain */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				6C2CB67C2ECB5B4A00D5E64A /* Exceptions for "GuessChain" folder in "GuessChain" target */,
-			);
 			path = GuessChain;
 			sourceTree = "<group>";
 		};
