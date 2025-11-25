@@ -61,13 +61,10 @@ class LobbyViewController: UIViewController {
         lobbyView.tableViewRooms.dataSource = self
         
         lobbyView.buttonCreateRoom.addTarget(self, action: #selector(createRoomTapped), for: .touchUpInside)
+        lobbyView.logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
     }
     
-    
-    
-    
     @objc func createRoomTapped() {
-        print("Create room tapped")
         let createRoomVC = CreateRoomViewController()
         navigationController?.pushViewController(createRoomVC, animated: true)
     }
@@ -75,11 +72,14 @@ class LobbyViewController: UIViewController {
     @objc func joinRoomTapped(_ sender: UIButton) {
         let roomIndex = sender.tag
         let room = rooms[roomIndex]
-        print("Join room tapped: \(room.name)")
         
         // Navigate to game screen
         let gameVC = GameScreenViewController()
         navigationController?.pushViewController(gameVC, animated: true)
+    }
+    
+    @objc func logoutTapped() {
+        navigationController?.setViewControllers([ViewController()], animated: true)
     }
     
 }

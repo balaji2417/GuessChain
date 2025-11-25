@@ -1,34 +1,34 @@
 //
 //  ViewController.swift
-//  WA_UI
+//  GuessChain
 //
-//  Created by Gokhula Krishnan Thangavel on 11/16/25.
+//  Created by Balaji Sundar on 11/17/25.
 //
 
 import UIKit
 
 class ViewController: UIViewController {
-    
-    var welcomeView: WelcomeScreenUI!
+    let firstScreen = LoginView()
     
     override func loadView() {
-        welcomeView = WelcomeScreenUI()
-        view = welcomeView
+        self.view = firstScreen
     }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        welcomeView.playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
+        var registerButton = firstScreen.registerButton
+        registerButton?.addTarget(self, action: #selector(registerButtonTapped), for: .touchUpInside)
+        
+        var loginButton = firstScreen.loginButton
+        loginButton?.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
     }
     
-    
-    @objc private func playButtonTapped() {
-        print("Play button tapped!")
-        let lobbyVC = LobbyViewController()
-        navigationController?.pushViewController(lobbyVC, animated: true)
+    @objc func registerButtonTapped() {
+        navigationController?.pushViewController(RegisterViewController(), animated: true)
     }
     
-    
-}
+    @objc func loginButtonTapped() {
+        navigationController?.pushViewController(WelcomeViewController(), animated: true)
+    }
 
+
+}

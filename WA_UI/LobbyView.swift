@@ -20,6 +20,7 @@ class LobbyView: UIView {
     var labelTitle: UILabel!
     var buttonCreateRoom: UIButton!
     var tableViewRooms: UITableView!
+    var logoutButton: UIButton!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -28,6 +29,7 @@ class LobbyView: UIView {
         setupLabelTitle()
         setupButtonCreateRoom()
         setupTableViewRooms()
+        setupLogoutButton()
         
         initConstraints()
     }
@@ -56,6 +58,14 @@ class LobbyView: UIView {
         self.addSubview(tableViewRooms)
     }
     
+    func setupLogoutButton() {
+        logoutButton = UIButton(type: .system)
+        logoutButton.setTitle("Logout", for: .normal)
+        logoutButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        logoutButton.translatesAutoresizingMaskIntoConstraints = false
+        self.addSubview(logoutButton)
+    }
+    
     func initConstraints() {
         NSLayoutConstraint.activate([
             labelTitle.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor, constant: 20),
@@ -65,6 +75,9 @@ class LobbyView: UIView {
             buttonCreateRoom.leadingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.leadingAnchor, constant: 24),
             buttonCreateRoom.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor, constant: -24),
             buttonCreateRoom.heightAnchor.constraint(equalToConstant: 44),
+            
+            logoutButton.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor, constant: 16),
+            logoutButton.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             
             tableViewRooms.topAnchor.constraint(equalTo: buttonCreateRoom.bottomAnchor, constant: 20),
             tableViewRooms.leadingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.leadingAnchor),

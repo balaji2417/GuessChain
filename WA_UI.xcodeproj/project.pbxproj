@@ -29,9 +29,22 @@
 		F898AE972ECAAF2600E8BFC5 /* WA_UIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WA_UIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F8E599FF2ED2192F00109079 /* Exceptions for "WA_UI" folder in "WA_UI" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F898AE762ECAAF2400E8BFC5 /* WA_UI */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F898AE792ECAAF2400E8BFC5 /* WA_UI */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F8E599FF2ED2192F00109079 /* Exceptions for "WA_UI" folder in "WA_UI" target */,
+			);
 			path = WA_UI;
 			sourceTree = "<group>";
 		};
@@ -186,7 +199,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F898AE722ECAAF2400E8BFC5 /* Build configuration list for PBXProject "UI2" */;
+			buildConfigurationList = F898AE722ECAAF2400E8BFC5 /* Build configuration list for PBXProject "WA_UI" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -519,7 +532,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F898AE722ECAAF2400E8BFC5 /* Build configuration list for PBXProject "UI2" */ = {
+		F898AE722ECAAF2400E8BFC5 /* Build configuration list for PBXProject "WA_UI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F898AEA32ECAAF2600E8BFC5 /* Debug */,

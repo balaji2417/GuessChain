@@ -27,10 +27,10 @@ class LeaderboardViewController: UIViewController {
         leaderboardView = LeaderboardView()
         view = leaderboardView
     }
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         leaderboardView.playersTable.delegate = self
         leaderboardView.playersTable.dataSource = self
         
@@ -44,8 +44,7 @@ class LeaderboardViewController: UIViewController {
     }
     
     @objc func onBackToLobby() {
-        print("back to lobby clicked")
-        navigationController?.popToRootViewController(animated: true)
+        navigationController?.setViewControllers([LobbyViewController()], animated: true)
     }
 }
 

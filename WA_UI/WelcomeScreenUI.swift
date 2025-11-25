@@ -20,16 +20,26 @@ class WelcomeScreenUI: UIView {
     var logoContainer: UIView!
     var logoLabel: UILabel!
     var playButton: UIButton!
+    var profileButton: UIButton!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.backgroundColor = .white
         
+        setupProfileButton()
         setupLogoContainer()
         setupLogoLabel()
         setupPlayButton()
         
         initConstraints()
+    }
+    
+    func setupProfileButton() {
+        profileButton = UIButton(type: .system)
+        profileButton.setTitle("Profile", for: .normal)
+        profileButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        profileButton.translatesAutoresizingMaskIntoConstraints = false
+        self.addSubview(profileButton)
     }
     
     func setupLogoContainer() {
@@ -57,6 +67,9 @@ class WelcomeScreenUI: UIView {
     
     func initConstraints() {
         NSLayoutConstraint.activate([
+            profileButton.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor, constant: 16),
+            profileButton.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            
             logoContainer.centerXAnchor.constraint(equalTo: self.centerXAnchor),
             logoContainer.centerYAnchor.constraint(equalTo: self.centerYAnchor, constant: -80),
             logoContainer.widthAnchor.constraint(equalToConstant: 180),
