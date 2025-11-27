@@ -9,7 +9,7 @@ import UIKit
 
 class LoginView: UIView {
      
-    var backgroundImageView: UIImageView! // <-- ADDED
+
     var contentWrapper: UIScrollView!
     var loginButton : UIButton!
     var emailTextField : UITextField!
@@ -20,10 +20,9 @@ class LoginView: UIView {
      
     override init(frame: CGRect) {
         super.init(frame: frame)
-        // Set background to clear so the image view behind it is visible
-        self.backgroundColor = .clear // <-- MODIFIED
         
-        setupBackground() // <-- ADDED
+        self.backgroundColor = .white
+// <-- ADDED
         setupScrollView()
         setupFields()
         setupRegisterField()
@@ -31,16 +30,7 @@ class LoginView: UIView {
         
     }
     
-    // <-- ADDED THIS ENTIRE FUNCTION -->
-    func setupBackground() {
-        backgroundImageView = UIImageView()
-        backgroundImageView.image = UIImage(named: "game")
-        backgroundImageView.contentMode = .scaleAspectFill
-        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
-        
-        // Add to view and send to back
-        self.insertSubview(backgroundImageView, at: 0)
-    }
+   
      
     func setupScrollView() {
         
@@ -108,12 +98,7 @@ class LoginView: UIView {
         NSLayoutConstraint.activate([
             
             // <-- ADDED CONSTRAINTS FOR BACKGROUND -->
-            // Pin background to all four edges of the LoginView itself
-            backgroundImageView.topAnchor.constraint(equalTo: self.topAnchor),
-            backgroundImageView.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-            backgroundImageView.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            backgroundImageView.trailingAnchor.constraint(equalTo: self.trailingAnchor),
-                         
+           
             // Your existing constraints
             contentWrapper.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor),
             contentWrapper.leadingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.leadingAnchor),
