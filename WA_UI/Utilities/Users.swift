@@ -6,11 +6,17 @@
 //
 
 import Foundation
+import UIKit
 
 
-struct Users {
-        var name: String!
+struct Users: Codable {
+    var name: String!
     var email: String!
-    var password: String!
-    var avatar: UIImage?
+    var avatarURL: String?
+    
+    enum CodingKeys: String, CodingKey {
+            case name
+            case email
+            case avatarURL
+        }
 }

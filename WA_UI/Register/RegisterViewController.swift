@@ -8,11 +8,19 @@
 import UIKit
 
 import PhotosUI
+import FirebaseStorage
+import FirebaseAuth
+import FirebaseFirestore
 
 class RegisterViewController: UIViewController {
 
     
     let registerScreen = RegisterView()
+    let storage = Storage.storage()
+    
+    var database: Firestore {
+        return Firestore.firestore()
+    }
     
     override func loadView() {
         self.view = registerScreen
