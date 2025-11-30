@@ -7,6 +7,8 @@
 
 import UIKit
 
+import PhotosUI
+
 class RegisterViewController: UIViewController {
 
     

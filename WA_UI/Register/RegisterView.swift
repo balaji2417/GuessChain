@@ -13,7 +13,8 @@ class RegisterView: UIView {
     var backgroundImageView: UIImageView!
         var contentWrapper: UIScrollView!
         var registerButton : UIButton!
-    
+   
+     var buttonTakePhoto: UIButton!
         var emailLabel : UILabel!
         var emailTextField : UITextField!
     
@@ -25,6 +26,8 @@ class RegisterView: UIView {
     
         var nameLabel : UILabel!
         var nameTextField : UITextField!
+        
+    var avatarLabel : UILabel!
     
         var registerLabel: UILabel!
         
@@ -36,6 +39,7 @@ class RegisterView: UIView {
                 setupScrollView()
                 setupLabels()
                 setupFields()
+            setupbuttonTakePhoto()
                 initConstraints()
             
            }
@@ -69,31 +73,48 @@ class RegisterView: UIView {
         nameLabel = UILabel()
         nameLabel.text = "Name:"
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        nameLabel.font = UIFont.boldSystemFont(ofSize: 25)
+        nameLabel.font = UIFont.boldSystemFont(ofSize: 15)
         contentWrapper.addSubview(nameLabel)
         
         emailLabel = UILabel()
         emailLabel.setContentHuggingPriority(.required, for: .horizontal)
         emailLabel.text = "Email:"
         emailLabel.translatesAutoresizingMaskIntoConstraints = false
-        emailLabel.font = UIFont.boldSystemFont(ofSize: 25)
+        emailLabel.font = UIFont.boldSystemFont(ofSize: 15)
         contentWrapper.addSubview(emailLabel)
         
         passwordLabel = UILabel()
         passwordLabel.text = "Password:"
         passwordLabel.translatesAutoresizingMaskIntoConstraints = false
-        passwordLabel.font = UIFont.boldSystemFont(ofSize: 25)
+        passwordLabel.font = UIFont.boldSystemFont(ofSize: 15)
         contentWrapper.addSubview(passwordLabel)
         
         confirmPasswordLabel = UILabel()
         confirmPasswordLabel.text = "Confirm Password:"
         confirmPasswordLabel.translatesAutoresizingMaskIntoConstraints = false
-        confirmPasswordLabel.font = UIFont.boldSystemFont(ofSize: 25)
+        confirmPasswordLabel.font = UIFont.boldSystemFont(ofSize: 15)
         contentWrapper.addSubview(confirmPasswordLabel)
         
         
     }
-    
+    func setupbuttonTakePhoto(){
+        
+        avatarLabel = UILabel()
+        avatarLabel.text = "Choose Your Avatar:"
+        avatarLabel.translatesAutoresizingMaskIntoConstraints = false
+        avatarLabel.font = UIFont.boldSystemFont(ofSize: 15)
+        contentWrapper.addSubview(avatarLabel)
+        
+        
+            buttonTakePhoto = UIButton(type: .system)
+            buttonTakePhoto.setTitle("", for: .normal)
+            buttonTakePhoto.setImage(UIImage(systemName: "camera.fill"), for: .normal)
+            buttonTakePhoto.contentHorizontalAlignment = .fill
+            buttonTakePhoto.contentVerticalAlignment = .fill
+            buttonTakePhoto.imageView?.contentMode = .scaleAspectFit
+            buttonTakePhoto.translatesAutoresizingMaskIntoConstraints = false
+            contentWrapper.addSubview(buttonTakePhoto)
+        }
     func setupFields() {
         
         nameTextField = UITextField()
@@ -154,7 +175,7 @@ class RegisterView: UIView {
                     contentWrapper.bottomAnchor.constraint(equalTo: self.safeAreaLayoutGuide.bottomAnchor),
 
                     // MARK: - Register Label
-                    registerLabel.topAnchor.constraint(equalTo: contentWrapper.topAnchor, constant: 150),
+                    registerLabel.topAnchor.constraint(equalTo: contentWrapper.topAnchor, constant: 100),
                     registerLabel.centerXAnchor.constraint(equalTo: contentWrapper.centerXAnchor),
 
                     // MARK: - Email Row
@@ -175,9 +196,17 @@ class RegisterView: UIView {
                     nameTextField.leadingAnchor.constraint(equalTo: nameLabel.trailingAnchor, constant: 8),
                     nameTextField.trailingAnchor.constraint(equalTo: contentWrapper.frameLayoutGuide.trailingAnchor, constant: -8),
                     
+                    avatarLabel.topAnchor.constraint(equalTo: nameTextField.bottomAnchor, constant: 16),
+                    avatarLabel.centerXAnchor.constraint(equalTo: contentWrapper.safeAreaLayoutGuide.centerXAnchor),
+                  
+                    buttonTakePhoto.topAnchor.constraint(equalTo: avatarLabel.bottomAnchor, constant: 7),
+                    buttonTakePhoto.centerXAnchor.constraint(equalTo: contentWrapper.safeAreaLayoutGuide.centerXAnchor),
+                               buttonTakePhoto.widthAnchor.constraint(equalToConstant: 100),
+                               buttonTakePhoto.heightAnchor.constraint(equalToConstant: 100),
+                    
                     
                     // MARK: - Password Row
-                    passwordLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 25),
+                    passwordLabel.topAnchor.constraint(equalTo: buttonTakePhoto.bottomAnchor, constant: 25),
                     passwordLabel.leadingAnchor.constraint(equalTo: contentWrapper.frameLayoutGuide.leadingAnchor, constant: 8),
 
                     passwordTextField.firstBaselineAnchor.constraint(equalTo: passwordLabel.firstBaselineAnchor),
