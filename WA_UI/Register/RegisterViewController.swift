@@ -27,7 +27,13 @@ class RegisterViewController: UIViewController {
     }
     override func viewDidLoad() {
         super.viewDidLoad()
+        var registerButton = registerScreen.registerButton
+        registerButton?.addTarget(self, action: #selector(registerButtonTapped), for: .touchUpInside)
 
+    }
+    
+    @objc func registerButtonTapped() {
+        navigationController?.pushViewController(ViewController(), animated: true)
     }
     
 
