@@ -27,8 +27,21 @@ class ViewController: UIViewController {
     }
     
     @objc func loginButtonTapped() {
-        navigationController?.pushViewController(WelcomeViewController(), animated: true)
+        if let uwEmail = firstScreen.emailTextField.text {
+            if let uwPassword = firstScreen.passwordTextField.text {
+                loginApi(uwEmail,uwPassword)
+            }
+        }
     }
 
-
+    func navigateToHome(){
+        navigationController?.pushViewController(WelcomeViewController(), animated: true)
+    }
+    
+    func showError(){
+        let alertController = UIAlertController(title: "Error!", message: "Invalid Credentials!", preferredStyle: .alert)
+        let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+        alertController.addAction(okAction)
+        self.present(alertController, animated: true, completion: nil)
+    }
 }
