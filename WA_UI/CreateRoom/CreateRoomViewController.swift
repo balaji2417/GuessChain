@@ -42,6 +42,8 @@ class CreateRoomViewController: UIViewController {
         }
         
         print("Room created: \(roomName)")
+        createRoom(roomName)
+        
         navigationController?.popViewController(animated: true)
     }
     

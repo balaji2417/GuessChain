@@ -6,18 +6,10 @@
 //
 
 import UIKit
+import FirebaseFirestore
+import FirebaseAuth
 
-struct Player {
-    let name: String
-    let avatar: String
-}
 
-struct Room {
-    let id: String
-    let name: String
-    let players: [Player]
-    let maxPlayers: Int
-}
 
 class LobbyViewController: UIViewController {
     /*
@@ -30,23 +22,13 @@ class LobbyViewController: UIViewController {
      }
      */
     var lobbyView: LobbyView!
+    var player : Player = Player(name: "", id: "")
     
-    // Dummy data
-    var rooms: [Room] = [
-        Room(id: "1", name: "Room Alpha", players: [
-            Player(name: "Player1", avatar: "🎮"),
-            Player(name: "Player2", avatar: "🎯")
-        ], maxPlayers: 4),
-        Room(id: "2", name: "Room Beta", players: [
-            Player(name: "Player3", avatar: "🎲")
-        ], maxPlayers: 4),
-        Room(id: "3", name: "Room Gamma", players: [
-            Player(name: "Player4", avatar: "🎪"),
-            Player(name: "Player5", avatar: "🎭"),
-            Player(name: "Player6", avatar: "🎨")
-        ], maxPlayers: 4)
-    ]
-    
+    // Data will be fetched from backend.
+    var rooms: [Room] = []
+
+    var listener: ListenerRegistration?
+   
     override func loadView() {
         lobbyView = LobbyView()
         view = lobbyView
@@ -55,7 +37,9 @@ class LobbyViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+       
+        getUserName()
+        listener = listenToAllLobbies()
         // Do any additional setup after loading the view.
         lobbyView.tableViewRooms.delegate = self
         lobbyView.tableViewRooms.dataSource = self
@@ -73,7 +57,9 @@ class LobbyViewController: UIViewController {
         let roomIndex = sender.tag
         let room = rooms[roomIndex]
         
-        // Navigate to game screen
+        print("Player :",player.name)
+        updateRoom(room.id,player)
+        
         let gameVC = GameScreenViewController()
         navigationController?.pushViewController(gameVC, animated: true)
     }
@@ -94,7 +80,12 @@ extension LobbyViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "RoomCell", for: indexPath) as! RoomTableViewCell
         let room = rooms[indexPath.row]
+        let players = room.maxPlayers - room.players.count
+        if (players == 0) {
+            cell.buttonJoin.isEnabled = false
+        }
         cell.configure(with: room)
+        
         cell.buttonJoin.tag = indexPath.row
         cell.buttonJoin.addTarget(self, action: #selector(joinRoomTapped), for: .touchUpInside)
         return cell

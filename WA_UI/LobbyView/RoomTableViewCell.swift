@@ -80,34 +80,10 @@ class RoomTableViewCell: UITableViewCell {
         
         stackViewPlayers.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
-        for player in room.players {
-            let avatarView = createAvatarView(with: player.avatar)
-            stackViewPlayers.addArrangedSubview(avatarView)
-        }
+      
     }
     
-    func createAvatarView(with emoji: String) -> UIView {
-        let view = UIView()
-        view.backgroundColor = .lightGray
-        view.layer.cornerRadius = 15
-        view.translatesAutoresizingMaskIntoConstraints = false
-        
-        let label = UILabel()
-        label.text = emoji
-        label.font = .systemFont(ofSize: 16)
-        label.textAlignment = .center
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
-        
-        NSLayoutConstraint.activate([
-            view.widthAnchor.constraint(equalToConstant: 30),
-            view.heightAnchor.constraint(equalToConstant: 30),
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-        ])
-        
-        return view
-    }
+   
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
