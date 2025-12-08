@@ -9,38 +9,27 @@ import UIKit
 import FirebaseFirestore
 import FirebaseAuth
 
-
-
 class LobbyViewController: UIViewController {
-    /*
-     // MARK: - Navigation
-     
-     // In a storyboard-based application, you will often want to do a little preparation before navigation
-     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-     // Get the new view controller using segue.destination.
-     // Pass the selected object to the new view controller.
-     }
-     */
+    
     var lobbyView: LobbyView!
-    var player : Player = Player(name: "", id: "")
+    var player: Player = Player(name: "", id: "")
     
     // Data will be fetched from backend.
     var rooms: [Room] = []
-
+    
     var listener: ListenerRegistration?
-   
+    
     override func loadView() {
         lobbyView = LobbyView()
         view = lobbyView
     }
     
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-       
+        
         getUserName()
         listener = listenToAllLobbies()
-        // Do any additional setup after loading the view.
+        
         lobbyView.tableViewRooms.delegate = self
         lobbyView.tableViewRooms.dataSource = self
         
@@ -57,19 +46,43 @@ class LobbyViewController: UIViewController {
         let roomIndex = sender.tag
         let room = rooms[roomIndex]
         
-        print("Player :",player.name)
-        updateRoom(room.id,player)
+        print("Player:", player.name)
+        updateRoom(room.id, player)
         
         let gameVC = GameScreenViewController()
         navigationController?.pushViewController(gameVC, animated: true)
     }
     
     @objc func logoutTapped() {
-        navigationController?.setViewControllers([ViewController()], animated: true)
+        let alert = UIAlertController(
+            title: "Logout",
+            message: "Are you sure you want to logout?",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Logout", style: .destructive) { [weak self] _ in
+            self?.performLogout()
+        })
+        
+        present(alert, animated: true)
     }
     
+    func performLogout() {
+        do {
+            try Auth.auth().signOut()
+            navigationController?.setViewControllers([ViewController()], animated: true)
+        } catch let error {
+            showAlert(message: "Error signing out: \(error.localizedDescription)")
+        }
+    }
+    
+    func showAlert(message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
 }
-
 
 extension LobbyViewController: UITableViewDelegate, UITableViewDataSource {
     
@@ -81,7 +94,7 @@ extension LobbyViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "RoomCell", for: indexPath) as! RoomTableViewCell
         let room = rooms[indexPath.row]
         let players = room.maxPlayers - room.players.count
-        if (players == 0) {
+        if players == 0 {
             cell.buttonJoin.isEnabled = false
         }
         cell.configure(with: room)

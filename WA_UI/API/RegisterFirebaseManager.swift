@@ -15,34 +15,9 @@ extension RegisterViewController {
     func uploadProfilePhotoToStorage() {
         var profilePhotoURL: URL?
         
-        if let image = pickedImage {
-            if let jpegData = image.jpegData(compressionQuality: 0.8) {
-                let storageRef = storage.reference()
-                let imagesRepo = storageRef.child("imagesUsers")
-                let imageRef = imagesRepo.child("\(UUID().uuidString).jpg")
-                
-                let uploadTask = imageRef.putData(jpegData, completion: { (metadata, error) in
-                    if error == nil {
-                        imageRef.downloadURL(completion: { (url, error) in
-                            if error == nil {
-                                profilePhotoURL = url
-                                print(profilePhotoURL)
-                                self.registerUser(photoURL: profilePhotoURL)
-                            } else {
-                                print("Error getting download URL: \(String(describing: error))")
-                                self.registerUser(photoURL: nil)
-                            }
-                        })
-                    } else {
-                        print("Error uploading image: \(String(describing: error))")
-                        // Still register even if photo upload fails
-                        self.registerUser(photoURL: nil)
-                    }
-                })
-            }
-        } else {
+      
             registerUser(photoURL: nil)
-        }
+        
     }
     
     func registerUser(photoURL: URL?) {
