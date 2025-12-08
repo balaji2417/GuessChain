@@ -46,10 +46,7 @@ class EditProfileViewController: UIViewController {
             target: self,
             action: #selector(onSaveButtonTapped)
         )
-        
-        
-        editProfileView.buttonPhoneType.addTarget(self, action: #selector(onPhoneTypeButtonTapped), for: .touchUpInside)
-        
+
         populateFields()
     }
     
@@ -59,11 +56,6 @@ class EditProfileViewController: UIViewController {
         editProfileView.emailField.text = profileEmail
         if !profilePhone.isEmpty {
             editProfileView.phoneField.text = profilePhone
-        }
-        
-        if !profilePhoneType.isEmpty {
-            selectedPhoneType = profilePhoneType
-            editProfileView.buttonPhoneType.setTitle(profilePhoneType, for: .normal)
         }
         
         if !profileStreet.isEmpty {
@@ -84,22 +76,6 @@ class EditProfileViewController: UIViewController {
         view.endEditing(true)
     }
     
-    @objc func onPhoneTypeButtonTapped() {
-        let alert = UIAlertController(title: "Select Phone Type", message: nil, preferredStyle: .actionSheet)
-        
-        for phoneType in phoneTypes {
-            alert.addAction(UIAlertAction(title: phoneType, style: .default) { [weak self] _ in
-                self?.selectedPhoneType = phoneType
-                self?.editProfileView.buttonPhoneType.setTitle(phoneType, for: .normal)
-            })
-        }
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        
-        present(alert, animated: true)
-    }
-    
     @objc func onSaveButtonTapped() {
         guard let nameText = editProfileView.nameField.text, !nameText.isEmpty else {
             showAlert(message: "Name cannot be empty")
@@ -116,7 +92,6 @@ class EditProfileViewController: UIViewController {
             return
         }
         
-        // Validate Phone
         var phoneText: String? = nil
         if let phone = editProfileView.phoneField.text, !phone.isEmpty {
             guard isValidPhone(phone) else {
@@ -156,7 +131,6 @@ class EditProfileViewController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
     
-    // MARK: - Validation Methods
     
     func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
@@ -181,15 +155,6 @@ class EditProfileViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
     }
-    /*
-     // MARK: - Navigation
-     
-     // In a storyboard-based application, you will often want to do a little preparation before navigation
-     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-     // Get the new view controller using segue.destination.
-     // Pass the selected object to the new view controller.
-     }
-     */
     
 }
 
