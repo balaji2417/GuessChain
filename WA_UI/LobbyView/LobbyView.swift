@@ -11,6 +11,7 @@ class LobbyView: UIView {
     var buttonCreateRoom: UIButton!
     var tableViewRooms: UITableView!
     var logoutButton: UIButton!
+    var homeButton: UIButton!
     var headerCard: UIView!
     var roomsCard: UIView!
     
@@ -23,6 +24,19 @@ class LobbyView: UIView {
     }
     
     func setupViews() {
+        // Home Button (top left)
+        homeButton = UIButton(type: .system)
+        homeButton.setTitle("Home", for: .normal)
+        homeButton.titleLabel?.font = UIFont(name: "Helvetica", size: 14) ?? .systemFont(ofSize: 14)
+        homeButton.setTitleColor(UIColor(red: 0.4, green: 0.75, blue: 0.6, alpha: 1.0), for: .normal)
+        homeButton.translatesAutoresizingMaskIntoConstraints = false
+        let homeIcon = UIImage(systemName: "house.fill")
+        homeButton.setImage(homeIcon, for: .normal)
+        homeButton.tintColor = UIColor(red: 0.4, green: 0.75, blue: 0.6, alpha: 1.0)
+        homeButton.semanticContentAttribute = .forceLeftToRight
+        homeButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: -4, bottom: 0, right: 4)
+        self.addSubview(homeButton)
+        
         // Logout Button (top right)
         logoutButton = UIButton(type: .system)
         logoutButton.setTitle("Logout", for: .normal)
@@ -151,6 +165,10 @@ class LobbyView: UIView {
               let roomsDivider = roomsCard.viewWithTag(105) else { return }
         
         NSLayoutConstraint.activate([
+            // Home Button - top left
+            homeButton.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor, constant: 16),
+            homeButton.leadingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            
             // Logout Button - top right
             logoutButton.topAnchor.constraint(equalTo: self.safeAreaLayoutGuide.topAnchor, constant: 16),
             logoutButton.trailingAnchor.constraint(equalTo: self.safeAreaLayoutGuide.trailingAnchor, constant: -20),

@@ -35,11 +35,16 @@ class LobbyViewController: UIViewController {
         
         lobbyView.buttonCreateRoom.addTarget(self, action: #selector(createRoomTapped), for: .touchUpInside)
         lobbyView.logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
+        lobbyView.homeButton.addTarget(self, action: #selector(homeTapped), for: .touchUpInside)
     }
     
     @objc func createRoomTapped() {
         let createRoomVC = CreateRoomViewController()
         navigationController?.pushViewController(createRoomVC, animated: true)
+    }
+    
+    @objc func homeTapped() {
+        navigationController?.pushViewController(WelcomeViewController(), animated: true)
     }
     
     @objc func joinRoomTapped(_ sender: UIButton) {
