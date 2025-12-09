@@ -13,13 +13,19 @@ extension CreateRoomViewController {
     func createRoom(_ roomName: String) {
         let db = Firestore.firestore()
         let roomData: [String: Any] = [
-               "name": roomName]
+            "name": roomName,
+            "players": [],
+            "maxPlayers": 4,
+            "gameStatus": "waiting",
+            "createdAt": FieldValue.serverTimestamp()
+        ]
+        
         db.collection("lobby").addDocument(data: roomData) { error in
-               if let error = error {
-                   print("Error creating room: \(error)")
-                   return
-               }
-               print("Room created: \(roomName)")
-           }
+            if let error = error {
+                print("Error creating room: \(error)")
+                return
+            }
+            print("Room created: \(roomName)")
+        }
     }
 }

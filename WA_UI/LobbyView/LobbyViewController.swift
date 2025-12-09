@@ -26,7 +26,6 @@ class LobbyViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         getUserName()
         listener = listenToAllLobbies()
         
@@ -36,6 +35,11 @@ class LobbyViewController: UIViewController {
         lobbyView.buttonCreateRoom.addTarget(self, action: #selector(createRoomTapped), for: .touchUpInside)
         lobbyView.logoutButton.addTarget(self, action: #selector(logoutTapped), for: .touchUpInside)
         lobbyView.homeButton.addTarget(self, action: #selector(homeTapped), for: .touchUpInside)
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // Don't remove listener, we want to keep getting updates
     }
     
     @objc func createRoomTapped() {
@@ -52,9 +56,25 @@ class LobbyViewController: UIViewController {
         let room = rooms[roomIndex]
         
         print("Player:", player.name)
+        
+        // Check if room is full
+        if room.players.count >= 4 {
+            showAlert(message: "Room is full!")
+            return
+        }
+        
+        // Check if player data is valid
+        if player.id.isEmpty || player.name.isEmpty {
+            showAlert(message: "Please wait, loading your profile...")
+            return
+        }
+        
         updateRoom(room.id, player)
         
+        // Navigate to game screen with roomId and playerId
         let gameVC = GameScreenViewController()
+        gameVC.roomId = room.id
+        gameVC.myPlayerId = player.id
         navigationController?.pushViewController(gameVC, animated: true)
     }
     
@@ -98,10 +118,7 @@ extension LobbyViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "RoomCell", for: indexPath) as! RoomTableViewCell
         let room = rooms[indexPath.row]
-        let players = room.maxPlayers - room.players.count
-        if players == 0 {
-            cell.buttonJoin.isEnabled = false
-        }
+        
         cell.configure(with: room)
         
         cell.buttonJoin.tag = indexPath.row
@@ -112,4 +129,6 @@ extension LobbyViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 100
     }
+    
 }
+
