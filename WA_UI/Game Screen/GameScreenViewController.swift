@@ -44,9 +44,34 @@ class GameScreenViewController: UIViewController {
         gameView.submitBtn.addTarget(self, action: #selector(submitAnswer), for: .touchUpInside)
         gameView.startGameBtn.addTarget(self, action: #selector(startGame), for: .touchUpInside)
         
+        // Request notification permission
+        LocalNotificationManager.shared.requestPermission()
+        
+        // Observe app lifecycle for notifications
+        NotificationCenter.default.addObserver(self, selector: #selector(appDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(appWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        
         becomeFirstResponder()
         setupRoomListener()
     }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    // MARK: - App Lifecycle for Local Notifications
+    @objc func appDidEnterBackground() {
+        // Only send notification if game is in progress
+        if gameStatus == "in_progress" {
+            LocalNotificationManager.shared.scheduleGameOnHoldNotification()
+        }
+    }
+    
+    @objc func appWillEnterForeground() {
+        // Cancel notification when user returns
+        LocalNotificationManager.shared.cancelGameNotification()
+    }
+    
     override var canBecomeFirstResponder: Bool {
         return true
     }
@@ -59,6 +84,8 @@ class GameScreenViewController: UIViewController {
     
     func handleShakeGesture() {
         guard gameStatus == "in_progress" else { return }
+        
+        guard currentPlayers.count > 0 else { return }
         
         let currentPlayerIndex = currentPlayerTurnIndex % currentPlayers.count
         guard currentPlayerIndex == myPlayerIndex else {
@@ -131,6 +158,10 @@ class GameScreenViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         listener?.remove()
+        
+        // If there are any pendinging notification->cancelling out
+        
+        LocalNotificationManager.shared.cancelGameNotification()
     }
         
     func setupRoomListener() {
@@ -265,7 +296,6 @@ class GameScreenViewController: UIViewController {
         }
     }
     
-    
     func checkTurn() {
         if isProcessingTurn {
             print("DEBUG: Already processing turn, skipping")
@@ -325,7 +355,6 @@ class GameScreenViewController: UIViewController {
         gameView.hideShakeHint()
     }
     
-    
     @objc func startGame() {
         gameView.startGameBtn.isEnabled = false
         
@@ -336,7 +365,6 @@ class GameScreenViewController: UIViewController {
         GameManager.shared.startGame(roomId: roomId) { [weak self] success, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    // If error, show overlay again
                     self?.showAlert(message: error)
                     self?.gameView.showStartOverlay()
                     self?.gameView.startGameBtn.isEnabled = true
@@ -415,7 +443,6 @@ class GameScreenViewController: UIViewController {
         if shouldBeCorrect {
             answer = question.answer
         } else {
-            // random realistic wrong answers
             let wrongAnswers = [
                 "Batman", "Superman", "Spider-Man", "Iron Man",
                 "Diana Prince", "Bruce Wayne", "Clark Kent",
@@ -449,7 +476,6 @@ class GameScreenViewController: UIViewController {
                 
                 self.gameView.showAnswerAnimation(answer: answer, isCorrect: isCorrect)
                 
-                // Move to next turn after animation
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     GameManager.shared.moveToNextTurn(
                         roomId: self.roomId,
@@ -494,8 +520,11 @@ class GameScreenViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "Leave", style: .destructive) { [weak self] _ in
             guard let self = self else { return }
             
-            // Remove listener first to prevent "room deleted" alert
+            // Remove listener first
             self.listener?.remove()
+            
+            // Cancel any pending notifications
+            LocalNotificationManager.shared.cancelGameNotification()
             
             // Delete room and go back
             GameManager.shared.deleteRoom(roomId: self.roomId) { success, error in
