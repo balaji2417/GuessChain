@@ -23,9 +23,15 @@ class RegisterViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboardOnTap))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
         NetworkManager.shared.observe(from: self)
         registerScreen.registerButton.addTarget(self, action: #selector(registerButtonTapped), for: .touchUpInside)
         registerScreen.loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
+    }
+    @objc func hideKeyboardOnTap() {
+        view.endEditing(true)
     }
     
     @objc func registerButtonTapped() {

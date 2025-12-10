@@ -19,7 +19,9 @@ class CreateRoomViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboardOnTap))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
         NetworkManager.shared.observe(from: self)
         if Auth.auth().currentUser != nil {
             getUserName ()
@@ -28,7 +30,9 @@ class CreateRoomViewController: UIViewController {
         createRoomView.buttonCancel.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
     }
     
-    
+    @objc func hideKeyboardOnTap() {
+        view.endEditing(true)
+    }
     /*
      // MARK: - Navigation
      

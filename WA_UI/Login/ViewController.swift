@@ -27,10 +27,14 @@ class ViewController: UIViewController {
         }
         self.view = firstScreen
     }
-    
+    @objc func hideKeyboardOnTap() {
+        view.endEditing(true)
+    }
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboardOnTap))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
 
         NetworkManager.shared.observe(from: self)
         

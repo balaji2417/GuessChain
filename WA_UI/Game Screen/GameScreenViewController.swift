@@ -39,6 +39,9 @@ class GameScreenViewController: UIViewController {
         NetworkManager.shared.observe(from: self)
         title = "Game Room"
         navigationItem.hidesBackButton = true
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboardOnTap))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
         
         let leaveBtn = UIBarButtonItem(title: "Leave", style: .plain, target: self, action: #selector(leaveGame))
         leaveBtn.tintColor = UIColor(red: 0.95, green: 0.35, blue: 0.35, alpha: 1.0)
@@ -65,7 +68,9 @@ class GameScreenViewController: UIViewController {
         becomeFirstResponder()
         setupRoomListener()
     }
-    
+    @objc func hideKeyboardOnTap() {
+        view.endEditing(true)
+    }
     // MARK: - Lifecycle Methods
     
     override func viewWillAppear(_ animated: Bool) {
