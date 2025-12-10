@@ -6,11 +6,12 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class CreateRoomViewController: UIViewController {
     
     var createRoomView: CreateRoomView!
-    
+    var player: Player = Player(name: "", id: "")
     override func loadView() {
         createRoomView = CreateRoomView()
         view = createRoomView
@@ -20,7 +21,9 @@ class CreateRoomViewController: UIViewController {
         super.viewDidLoad()
         
         // Do any additional setup after loading the view.
-        
+        if Auth.auth().currentUser != nil {
+            getUserName ()
+        }
         createRoomView.buttonCreate.addTarget(self, action: #selector(createButtonTapped), for: .touchUpInside)
         createRoomView.buttonCancel.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
     }
