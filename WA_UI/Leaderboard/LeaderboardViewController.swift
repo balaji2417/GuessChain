@@ -2,10 +2,12 @@
 //  LeaderboardViewController.swift
 //  WA_UI
 //
-//  Created by Swetha Shankara Raman on 11/17/25.
+//  Created by Swetha Shankara Rama on 11/17/25.
 //
 
+
 import UIKit
+import FirebaseFirestore
 
 class LeaderboardViewController: UIViewController {
     
@@ -33,14 +35,17 @@ class LeaderboardViewController: UIViewController {
     }
     
     func setupLeaderboard() {
+        // Filter out bots and sort by score
         sortedPlayers = players
             .filter { !$0.id.hasPrefix("bot_") }
             .sorted { $0.score > $1.score }
         
+        // If we have all bots, show them too
         if sortedPlayers.isEmpty {
             sortedPlayers = players.sorted { $0.score > $1.score }
         }
         
+        // Update podium (top 3)
         if sortedPlayers.count >= 1 {
             let displayName = sortedPlayers[0].id == myPlayerId ? "YOU" : sortedPlayers[0].name
             leaderboardView.firstNameLabel.text = displayName
@@ -63,6 +68,7 @@ class LeaderboardViewController: UIViewController {
             leaderboardView.thirdPlaceCard.isHidden = true
         }
         
+        // Add ALL players as cards below medals
         leaderboardView.clearPlayerCards()
         for (index, player) in sortedPlayers.enumerated() {
             let rank = index + 1
@@ -72,14 +78,38 @@ class LeaderboardViewController: UIViewController {
     }
     
     @objc func onBackToLobby() {
-        // Delete the room from Firestore
-        GameManager.shared.deleteRoom(roomId: roomId) { [weak self] success, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    print("Error deleting room: \(error)")
+        let db = Firestore.firestore()
+        let roomRef = db.collection("lobby").document(roomId)
+        
+        // Get current room data
+        roomRef.getDocument { [weak self] snapshot, error in
+            guard let self = self,
+                  let data = snapshot?.data(),
+                  var players = data["players"] as? [[String: Any]] else {
+                // If room doesn't exist or error, just go back
+                DispatchQueue.main.async {
+                    self?.navigationController?.setViewControllers([LobbyViewController()], animated: true)
                 }
-                
-                self?.navigationController?.setViewControllers([LobbyViewController()], animated: true)
+                return
+            }
+            
+            // Remove current player from room
+            players.removeAll { $0["id"] as? String == self.myPlayerId }
+            
+            if players.isEmpty {
+                // Last player leaving - delete the room
+                GameManager.shared.deleteRoom(roomId: self.roomId) { _, _ in
+                    DispatchQueue.main.async {
+                        self.navigationController?.setViewControllers([LobbyViewController()], animated: true)
+                    }
+                }
+            } else {
+                // Other players still viewing leaderboard - just remove yourself
+                roomRef.updateData(["players": players]) { _ in
+                    DispatchQueue.main.async {
+                        self.navigationController?.setViewControllers([LobbyViewController()], animated: true)
+                    }
+                }
             }
         }
     }

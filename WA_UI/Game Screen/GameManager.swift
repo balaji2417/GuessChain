@@ -6,6 +6,13 @@
 //
 
 
+//
+//  GameManager.swift
+//  GuessChain
+//
+//  Added: Auto-timeout monitoring
+//
+
 import Foundation
 import FirebaseFirestore
 
@@ -13,6 +20,7 @@ class GameManager {
     
     static let shared = GameManager()
     private let db = Firestore.firestore()
+    private var timeoutTimers: [String: Timer] = [:]  // Track timeouts per room
     
     private init() {}
     
@@ -46,8 +54,8 @@ class GameManager {
                 }
             }
             
-            if cleanedPlayers.isEmpty {
-                completion(false, "No players in room")
+            if cleanedPlayers.count < 2 {
+                completion(false, "Need at least 2 players")
                 return
             }
             
@@ -62,11 +70,9 @@ class GameManager {
                     return
                 }
                 
-                // Prepare question data
                 let questionIds = questions.map { $0.id }
                 let firstQuestion = questions[0]
                 
-                // Update room with game data and cleaned players
                 roomRef.updateData([
                     "players": cleanedPlayers,
                     "gameStatus": "in_progress",
@@ -74,6 +80,7 @@ class GameManager {
                     "currentQuestionIndex": 0,
                     "currentPlayerTurnIndex": 0,
                     "answeredPlayers": [],
+                    "turnStartTime": FieldValue.serverTimestamp(),  // Track when turn started
                     "currentQuestion": [
                         "id": firstQuestion.id,
                         "question": firstQuestion.question,
@@ -84,11 +91,68 @@ class GameManager {
                     if let error = error {
                         completion(false, "Error starting game: \(error.localizedDescription)")
                     } else {
+                        // Start timeout monitor
+                        self.monitorTimeout(roomId: roomId)
                         completion(true, nil)
                     }
                 }
             }
         }
+    }
+    
+    private func monitorTimeout(roomId: String) {
+        // Monitor for 35 seconds (5 sec grace period after 30)
+        timeoutTimers[roomId]?.invalidate()
+        
+        timeoutTimers[roomId] = Timer.scheduledTimer(withTimeInterval: 35.0, repeats: true) { [weak self] _ in
+            self?.checkAndHandleTimeout(roomId: roomId)
+        }
+    }
+    
+    private func checkAndHandleTimeout(roomId: String) {
+        let roomRef = db.collection("lobby").document(roomId)
+        
+        roomRef.getDocument { snapshot, error in
+            guard let data = snapshot?.data(),
+                  let turnStartTime = data["turnStartTime"] as? Timestamp else {
+                return
+            }
+            
+            let now = Date()
+            let turnStart = turnStartTime.dateValue()
+            let elapsed = now.timeIntervalSince(turnStart)
+            
+            // If turn has been going for more than 35 seconds, force skip
+            if elapsed > 35 {
+                print("Force timeout - auto-skipping turn")
+                
+                guard let currentPlayerTurnIndex = data["currentPlayerTurnIndex"] as? Int,
+                      let players = data["players"] as? [[String: Any]],
+                      !players.isEmpty else {
+                    return
+                }
+                
+                let playerCount = players.count
+                let currentPlayerIndex = currentPlayerTurnIndex % playerCount
+                let currentPlayer = players[currentPlayerIndex]
+                let playerId = currentPlayer["id"] as? String ?? ""
+                
+                // Force move to next turn
+                self.moveToNextTurn(
+                    roomId: roomId,
+                    questionIds: data["questionIds"] as? [String] ?? [],
+                    playerId: playerId,
+                    wasCorrect: false
+                ) { _, _ in
+                    print("Auto-skipped inactive player")
+                }
+            }
+        }
+    }
+    
+    func stopTimeoutMonitor(roomId: String) {
+        timeoutTimers[roomId]?.invalidate()
+        timeoutTimers.removeValue(forKey: roomId)
     }
     
     private func fetchRandomQuestions(count: Int, completion: @escaping ([Question]?, String?) -> Void) {
@@ -122,7 +186,7 @@ class GameManager {
             if selectedQuestions.count >= count {
                 completion(selectedQuestions, nil)
             } else {
-                completion(nil, "Not enough questions in database (need \(count), found \(selectedQuestions.count))")
+                completion(nil, "Not enough questions in database")
             }
         }
     }
@@ -135,12 +199,9 @@ class GameManager {
         currentQuestion: Question,
         completion: @escaping (Bool, Bool, String?) -> Void
     ) {
-        let roomRef = db.collection("lobby").document(roomId)
-        
         let isCorrect = answer.lowercased().trimmingCharacters(in: .whitespaces) ==
                        currentQuestion.answer.lowercased().trimmingCharacters(in: .whitespaces)
         
-      
         completion(true, isCorrect, nil)
     }
     
@@ -167,7 +228,8 @@ class GameManager {
                 return
             }
             
-            if wasCorrect {
+            // Update score if correct
+            if wasCorrect && !playerId.isEmpty {
                 for (index, player) in players.enumerated() {
                     if let id = player["id"] as? String, id == playerId {
                         var updatedPlayer = player
@@ -187,31 +249,38 @@ class GameManager {
                 return
             }
             
+            // Check if only 1 player left - end game
+            if playerCount == 1 {
+                roomRef.updateData([
+                    "gameStatus": "completed",
+                    "players": players
+                ]) { error in
+                    completion(error == nil, error?.localizedDescription)
+                }
+                return
+            }
+            
             var answeredPlayers = data["answeredPlayers"] as? [String] ?? []
-            answeredPlayers.append(playerId)
+            if !playerId.isEmpty {
+                answeredPlayers.append(playerId)
+            }
             
             let shouldMoveToNextQuestion = wasCorrect || (answeredPlayers.count >= playerCount)
             
             if shouldMoveToNextQuestion {
-                // Move to next question
                 let newQuestionIndex = currentQuestionIndex + 1
                 let nextPlayerIndex = (currentPlayerTurnIndex + 1) % playerCount
                 
-                print("DEBUG: Moving to Q\(newQuestionIndex + 1), starting with player index \(nextPlayerIndex)")
-                
-                // Check if game over
                 if newQuestionIndex >= 5 {
                     roomRef.updateData([
                         "gameStatus": "completed",
                         "players": players
                     ]) { error in
-                        completion(false, error?.localizedDescription)
-                        print("Game completed!")
+                        completion(error == nil, error?.localizedDescription)
                     }
                     return
                 }
                 
-                // Fetch next question
                 let nextQuestionId = questionIds[newQuestionIndex]
                 self.db.collection("Questions").document(nextQuestionId).getDocument { questionSnapshot, error in
                     guard let questionData = questionSnapshot?.data(),
@@ -221,12 +290,12 @@ class GameManager {
                         return
                     }
                     
-                    // Update-new question, reset answered players
                     roomRef.updateData([
                         "currentQuestionIndex": newQuestionIndex,
                         "currentPlayerTurnIndex": nextPlayerIndex,
-                        "answeredPlayers": [],  // Reset for new question
+                        "answeredPlayers": [],
                         "players": players,
+                        "turnStartTime": FieldValue.serverTimestamp(),  // Reset timer
                         "currentQuestion": [
                             "id": nextQuestionId,
                             "question": questionText,
@@ -237,15 +306,13 @@ class GameManager {
                     }
                 }
             } else {
-                // Stay on same question, move to next player
                 let nextPlayerIndex = (currentPlayerTurnIndex + 1) % playerCount
-                
-                print("DEBUG: Same question, next player index \(nextPlayerIndex)")
                 
                 roomRef.updateData([
                     "currentPlayerTurnIndex": nextPlayerIndex,
                     "answeredPlayers": answeredPlayers,
-                    "players": players
+                    "players": players,
+                    "turnStartTime": FieldValue.serverTimestamp()  // Reset timer
                 ]) { error in
                     completion(error == nil, error?.localizedDescription)
                 }
@@ -254,6 +321,8 @@ class GameManager {
     }
     
     func deleteRoom(roomId: String, completion: @escaping (Bool, String?) -> Void) {
+        stopTimeoutMonitor(roomId: roomId)
+        
         db.collection("lobby").document(roomId).delete { error in
             if let error = error {
                 completion(false, "Error deleting room: \(error.localizedDescription)")

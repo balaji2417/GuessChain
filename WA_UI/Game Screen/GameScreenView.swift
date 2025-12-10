@@ -5,6 +5,13 @@
 //  Created by Swetha Shankara Raman on 11/17/25.
 //
 
+//
+//  GameScreenView.swift
+//  GuessChain
+//
+//  Added: Timer label and waiting for host label
+//
+
 import UIKit
 
 class GameScreenView: UIView {
@@ -13,7 +20,10 @@ class GameScreenView: UIView {
     var contentContainer: UIView!
     var roundLabel: UILabel!
     var turnIndicatorLabel: UILabel!
+    var timerLabel: UILabel!          // NEW
+    var waitingLabel: UILabel!        // NEW
     
+    // 4 Player Cards
     var playerCard1: UIView!
     var playerCard2: UIView!
     var playerCard3: UIView!
@@ -27,23 +37,33 @@ class GameScreenView: UIView {
     var playerScore3: UILabel!
     var playerScore4: UILabel!
     
+    // Question card
     var questionCard: UIView!
     var questionLabel: UILabel!
     var questionIconBg: UIView!
     var questionIcon: UILabel!
     
+    // Answer display
     var answerDisplayCard: UIView!
     var answerDisplayLabel: UILabel!
     
+    // Input
     var answerField: UITextField!
     var submitBtn: UIButton!
     
+    // Start button
     var startGameBtn: UIButton!
     
+    // Shake hint
     var shakeHintLabel: UILabel!
     
+    // Start overlay
     var startOverlay: UIVisualEffectView!
     var startBanner: UIView!
+    
+    // Waiting overlay (separate for non-owners)
+    var waitingOverlay: UIVisualEffectView!
+    var waitingBanner: UIView!
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -54,6 +74,8 @@ class GameScreenView: UIView {
         setupContentContainer()
         setupRoundLabel()
         setupTurnIndicator()
+        setupTimerLabel()          // NEW
+        setupWaitingLabel()        // NEW
         setupPlayerCards()
         setupQuestionCard()
         setupAnswerDisplay()
@@ -62,6 +84,7 @@ class GameScreenView: UIView {
         setupStartGameBtn()
         setupShakeHint()
         setupStartOverlay()
+        setupWaitingOverlay()  // NEW
         
         initConstraints()
     }
@@ -99,6 +122,29 @@ class GameScreenView: UIView {
         turnIndicatorLabel.alpha = 0
         turnIndicatorLabel.translatesAutoresizingMaskIntoConstraints = false
         contentContainer.addSubview(turnIndicatorLabel)
+    }
+    
+    func setupTimerLabel() {
+        timerLabel = UILabel()
+        timerLabel.text = "30"
+        timerLabel.font = UIFont(name: "Menlo-Bold", size: 24) ?? .monospacedSystemFont(ofSize: 24, weight: .bold)
+        timerLabel.textColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
+        timerLabel.textAlignment = .center
+        timerLabel.alpha = 0
+        timerLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.addSubview(timerLabel)
+    }
+    
+    func setupWaitingLabel() {
+        waitingLabel = UILabel()
+        waitingLabel.text = "Waiting for host to start..."
+        waitingLabel.font = UIFont(name: "Helvetica", size: 16) ?? .systemFont(ofSize: 16, weight: .regular)
+        waitingLabel.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        waitingLabel.textAlignment = .center
+        waitingLabel.numberOfLines = 0
+        waitingLabel.alpha = 0
+        waitingLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.addSubview(waitingLabel)
     }
     
     func setupPlayerCards() {
@@ -293,7 +339,7 @@ class GameScreenView: UIView {
         startBanner.layer.shadowRadius = 40
         startBanner.layer.shadowOpacity = 0.4
         startBanner.translatesAutoresizingMaskIntoConstraints = false
-        startOverlay.contentView.addSubview(startBanner)  // Add to contentView!
+        startOverlay.contentView.addSubview(startBanner)
         
         let iconBg = UIView()
         iconBg.backgroundColor = UIColor(red: 0.4, green: 0.75, blue: 0.6, alpha: 0.15)
@@ -333,6 +379,62 @@ class GameScreenView: UIView {
         startOverlay.isHidden = true
     }
     
+    func setupWaitingOverlay() {
+        // Separate overlay for non-owners
+        waitingOverlay = UIVisualEffectView(effect: UIBlurEffect(style: .dark))
+        waitingOverlay.translatesAutoresizingMaskIntoConstraints = false
+        self.addSubview(waitingOverlay)
+        
+        waitingBanner = UIView()
+        waitingBanner.backgroundColor = .white
+        waitingBanner.layer.cornerRadius = 28
+        waitingBanner.layer.shadowColor = UIColor.black.cgColor
+        waitingBanner.layer.shadowOffset = CGSize(width: 0, height: 15)
+        waitingBanner.layer.shadowRadius = 40
+        waitingBanner.layer.shadowOpacity = 0.4
+        waitingBanner.translatesAutoresizingMaskIntoConstraints = false
+        waitingOverlay.contentView.addSubview(waitingBanner)
+        
+        // Icon
+        let iconBg = UIView()
+        iconBg.backgroundColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 0.15)
+        iconBg.layer.cornerRadius = 35
+        iconBg.translatesAutoresizingMaskIntoConstraints = false
+        iconBg.tag = 204
+        waitingBanner.addSubview(iconBg)
+        
+        let iconLabel = UILabel()
+        iconLabel.text = "⏳"
+        iconLabel.font = .systemFont(ofSize: 40)
+        iconLabel.textAlignment = .center
+        iconLabel.translatesAutoresizingMaskIntoConstraints = false
+        iconLabel.tag = 205
+        iconBg.addSubview(iconLabel)
+        
+        // Title
+        let titleLabel = UILabel()
+        titleLabel.text = "Waiting for Host"
+        titleLabel.font = UIFont(name: "Helvetica-Bold", size: 26) ?? .systemFont(ofSize: 26, weight: .bold)
+        titleLabel.textColor = UIColor(red: 0.25, green: 0.25, blue: 0.28, alpha: 1.0)
+        titleLabel.textAlignment = .center
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.tag = 202
+        waitingBanner.addSubview(titleLabel)
+        
+        // Subtitle
+        let subtitleLabel = UILabel()
+        subtitleLabel.text = "The host will start the game soon"
+        subtitleLabel.font = UIFont(name: "Helvetica", size: 14) ?? .systemFont(ofSize: 14)
+        subtitleLabel.textColor = UIColor(red: 0.6, green: 0.6, blue: 0.6, alpha: 1.0)
+        subtitleLabel.textAlignment = .center
+        subtitleLabel.numberOfLines = 0
+        subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        subtitleLabel.tag = 203
+        waitingBanner.addSubview(subtitleLabel)
+        
+        waitingOverlay.isHidden = true
+    }
+    
     func initConstraints() {
         NSLayoutConstraint.activate([
             mainScroll.topAnchor.constraint(equalTo: self.topAnchor),
@@ -352,12 +454,21 @@ class GameScreenView: UIView {
             turnIndicatorLabel.topAnchor.constraint(equalTo: roundLabel.bottomAnchor, constant: 4),
             turnIndicatorLabel.centerXAnchor.constraint(equalTo: contentContainer.centerXAnchor),
             
-            playerCard1.topAnchor.constraint(equalTo: turnIndicatorLabel.bottomAnchor, constant: 16),
+            timerLabel.topAnchor.constraint(equalTo: turnIndicatorLabel.bottomAnchor, constant: 4),
+            timerLabel.centerXAnchor.constraint(equalTo: contentContainer.centerXAnchor),
+            
+            waitingLabel.centerXAnchor.constraint(equalTo: contentContainer.centerXAnchor),
+            waitingLabel.centerYAnchor.constraint(equalTo: contentContainer.centerYAnchor),
+            waitingLabel.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor, constant: 40),
+            waitingLabel.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor, constant: -40),
+            
+            // Player Cards
+            playerCard1.topAnchor.constraint(equalTo: timerLabel.bottomAnchor, constant: 12),
             playerCard1.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor, constant: 16),
             playerCard1.widthAnchor.constraint(equalTo: contentContainer.widthAnchor, multiplier: 0.44),
             playerCard1.heightAnchor.constraint(equalToConstant: 75),
             
-            playerCard2.topAnchor.constraint(equalTo: turnIndicatorLabel.bottomAnchor, constant: 16),
+            playerCard2.topAnchor.constraint(equalTo: timerLabel.bottomAnchor, constant: 12),
             playerCard2.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor, constant: -16),
             playerCard2.widthAnchor.constraint(equalTo: contentContainer.widthAnchor, multiplier: 0.44),
             playerCard2.heightAnchor.constraint(equalToConstant: 75),
@@ -392,8 +503,8 @@ class GameScreenView: UIView {
             playerScore4.bottomAnchor.constraint(equalTo: playerCard4.bottomAnchor, constant: -10),
             playerScore4.centerXAnchor.constraint(equalTo: playerCard4.centerXAnchor),
             
-            // Question Card - compact with red ? badge
-            questionCard.topAnchor.constraint(equalTo: playerCard3.bottomAnchor, constant: 18),
+            // Question Card
+            questionCard.topAnchor.constraint(equalTo: playerCard3.bottomAnchor, constant: 16),
             questionCard.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor, constant: 20),
             questionCard.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor, constant: -20),
             questionCard.heightAnchor.constraint(equalToConstant: 115),
@@ -435,6 +546,7 @@ class GameScreenView: UIView {
             shakeHintLabel.centerXAnchor.constraint(equalTo: contentContainer.centerXAnchor),
             shakeHintLabel.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor, constant: -20),
             
+            // Start Overlay
             startOverlay.topAnchor.constraint(equalTo: self.topAnchor),
             startOverlay.leadingAnchor.constraint(equalTo: self.leadingAnchor),
             startOverlay.trailingAnchor.constraint(equalTo: self.trailingAnchor),
@@ -473,8 +585,47 @@ class GameScreenView: UIView {
                 startGameBtn.bottomAnchor.constraint(equalTo: startBanner.bottomAnchor, constant: -30)
             ])
         }
-    }
         
+        // Waiting overlay constraints
+        NSLayoutConstraint.activate([
+            waitingOverlay.topAnchor.constraint(equalTo: self.topAnchor),
+            waitingOverlay.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+            waitingOverlay.trailingAnchor.constraint(equalTo: self.trailingAnchor),
+            waitingOverlay.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+            
+            waitingBanner.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            waitingBanner.centerYAnchor.constraint(equalTo: self.centerYAnchor),
+            waitingBanner.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 30),
+            waitingBanner.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -30)
+        ])
+        
+        if let iconBg = waitingBanner.viewWithTag(204),
+           let iconLabel = waitingBanner.viewWithTag(205),
+           let titleLabel = waitingBanner.viewWithTag(202),
+           let subtitleLabel = waitingBanner.viewWithTag(203) {
+            NSLayoutConstraint.activate([
+                iconBg.topAnchor.constraint(equalTo: waitingBanner.topAnchor, constant: 30),
+                iconBg.centerXAnchor.constraint(equalTo: waitingBanner.centerXAnchor),
+                iconBg.widthAnchor.constraint(equalToConstant: 70),
+                iconBg.heightAnchor.constraint(equalToConstant: 70),
+                
+                iconLabel.centerXAnchor.constraint(equalTo: iconBg.centerXAnchor),
+                iconLabel.centerYAnchor.constraint(equalTo: iconBg.centerYAnchor),
+                
+                titleLabel.topAnchor.constraint(equalTo: iconBg.bottomAnchor, constant: 20),
+                titleLabel.centerXAnchor.constraint(equalTo: waitingBanner.centerXAnchor),
+                
+                subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+                subtitleLabel.centerXAnchor.constraint(equalTo: waitingBanner.centerXAnchor),
+                subtitleLabel.leadingAnchor.constraint(equalTo: waitingBanner.leadingAnchor, constant: 30),
+                subtitleLabel.trailingAnchor.constraint(equalTo: waitingBanner.trailingAnchor, constant: -30),
+                subtitleLabel.bottomAnchor.constraint(equalTo: waitingBanner.bottomAnchor, constant: -30)
+            ])
+        }
+    }
+    
+    // MARK: - Helper Methods
+    
     func highlightPlayerCard(_ index: Int) {
         [playerCard1, playerCard2, playerCard3, playerCard4].forEach {
             $0?.layer.borderColor = UIColor(red: 0.88, green: 0.87, blue: 0.85, alpha: 1.0).cgColor
@@ -544,6 +695,44 @@ class GameScreenView: UIView {
     func hideShakeHint() {
         UIView.animate(withDuration: 0.3) {
             self.shakeHintLabel.alpha = 0
+        }
+    }
+    
+    func showTimer(_ time: Int) {
+        timerLabel.text = "\(time)"
+        timerLabel.textColor = time <= 10 ?
+            UIColor(red: 0.95, green: 0.35, blue: 0.35, alpha: 1.0) :
+            UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
+        UIView.animate(withDuration: 0.2) {
+            self.timerLabel.alpha = 1
+        }
+    }
+    
+    func hideTimer() {
+        UIView.animate(withDuration: 0.2) {
+            self.timerLabel.alpha = 0
+        }
+    }
+    
+    func showWaitingForHost() {
+        // Show separate waiting overlay
+        waitingOverlay.isHidden = false
+        waitingOverlay.alpha = 0
+        waitingBanner.alpha = 0
+        waitingBanner.transform = CGAffineTransform(scaleX: 0.85, y: 0.85)
+        
+        UIView.animate(withDuration: 0.5) {
+            self.waitingOverlay.alpha = 1
+            self.waitingBanner.alpha = 1
+            self.waitingBanner.transform = .identity
+        }
+    }
+    
+    func hideWaitingForHost() {
+        UIView.animate(withDuration: 0.3) {
+            self.waitingOverlay.alpha = 0
+        } completion: { _ in
+            self.waitingOverlay.isHidden = true
         }
     }
     
