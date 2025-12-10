@@ -34,7 +34,7 @@ class EditProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        NetworkManager.shared.observe(from: self)
         title = "Edit Profile"
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboardOnTap))
@@ -77,6 +77,7 @@ class EditProfileViewController: UIViewController {
     }
     
     @objc func onSaveButtonTapped() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         guard let nameText = editProfileView.nameField.text, !nameText.isEmpty else {
             showAlert(message: "Name cannot be empty")
             return

@@ -19,6 +19,7 @@ class WelcomeViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        NetworkManager.shared.observe(from: self)
         navigationItem.hidesBackButton = true
         welcomeView.playButton.addTarget(self, action: #selector(playButtonTapped), for: .touchUpInside)
         welcomeView.profileButton.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
@@ -38,6 +39,7 @@ class WelcomeViewController: UIViewController {
     }
     
     @objc private func logoutButtonTapped() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         let alert = UIAlertController(
             title: "Logout",
             message: "Are you sure you want to logout?",
@@ -53,6 +55,7 @@ class WelcomeViewController: UIViewController {
     }
     
     private func performLogout() {
+        
         do {
             try Auth.auth().signOut()
             navigationController?.setViewControllers([ViewController()], animated: true)

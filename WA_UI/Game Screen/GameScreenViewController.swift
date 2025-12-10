@@ -1,10 +1,6 @@
 //
 //  GameScreenViewController.swift
-//  WA_UI
 //
-//  Created by Swetha Shankara Raman on 11/17/25.
-//
-
 
 import UIKit
 import FirebaseFirestore
@@ -21,8 +17,9 @@ class GameScreenViewController: UIViewController {
     private var timer: Timer?
     private var timeRemaining: Int = 30
     private var previousPlayerCount: Int = 0
-    private var previousPlayerIds: Set<String> = []  // Track who was in the room
-    private var hasShownHostLeftAlert: Bool = false  // Prevent multiple alerts
+    private var previousPlayerIds: Set<String> = []
+    private var hasShownHostLeftAlert: Bool = false
+    private var ownerWasEverPresent: Bool = false
     
     private var currentPlayers: [Player] = []
     private var currentQuestionIds: [String] = []
@@ -39,7 +36,7 @@ class GameScreenViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        NetworkManager.shared.observe(from: self)
         title = "Game Room"
         navigationItem.hidesBackButton = true
         
@@ -50,13 +47,60 @@ class GameScreenViewController: UIViewController {
         gameView.submitBtn.addTarget(self, action: #selector(submitAnswer), for: .touchUpInside)
         gameView.startGameBtn.addTarget(self, action: #selector(startGame), for: .touchUpInside)
         
+        // Add observers for app background/foreground notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidEnterBackground),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+        
         becomeFirstResponder()
         setupRoomListener()
+    }
+    
+    // MARK: - Lifecycle Methods
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Cancel notification when returning to game screen
+        LocalNotificationManager.shared.cancelGameNotification()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         timer?.invalidate()
+        
+        // Schedule notification if leaving while game is in progress
+        if gameStatus == "in_progress" {
+            LocalNotificationManager.shared.scheduleGameOnHoldNotification()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        listener?.remove()
+    }
+    
+    // MARK: - App Lifecycle Notifications
+    
+    @objc func appDidEnterBackground() {
+        // Schedule notification when app goes to background during active game
+        if gameStatus == "in_progress" {
+            LocalNotificationManager.shared.scheduleGameOnHoldNotification()
+        }
+    }
+    
+    @objc func appWillEnterForeground() {
+        // Cancel notification when returning to app
+        LocalNotificationManager.shared.cancelGameNotification()
     }
     
     override var canBecomeFirstResponder: Bool {
@@ -101,13 +145,31 @@ class GameScreenViewController: UIViewController {
             guard let self = self else { return }
             
             if let error = error {
+                let nsError = error as NSError
+                
+                // Ignore network-related Firebase errors (handled by NetworkManager)
+                // FirestoreErrorCode.unavailable = 14 (network issues)
+                // FirestoreErrorCode.cancelled = 1 (request cancelled)
+                if nsError.domain == "FIRFirestoreErrorDomain" {
+                    let errorCode = nsError.code
+                    if errorCode == 14 || errorCode == 1 {
+                        print("Firebase network error (handled by NetworkManager): \(error.localizedDescription)")
+                        return
+                    }
+                }
+                
+                // Also ignore if no network connection
+                if !NetworkManager.shared.isConnected {
+                    print("Firebase error during network outage (ignored): \(error.localizedDescription)")
+                    return
+                }
+                
                 print("Error listening to room: \(error)")
                 return
             }
             
             guard let data = snapshot?.data() else {
                 print("Room deleted")
-                // NO POPUP - just go back silently
                 DispatchQueue.main.async {
                     self.listener?.remove()
                     self.navigationController?.setViewControllers([LobbyViewController()], animated: true)
@@ -155,24 +217,28 @@ class GameScreenViewController: UIViewController {
         let statusChanged = newGameStatus != gameStatus
         gameStatus = newGameStatus
         
-        // Check if owner is actually in the room (only if we haven't shown alert yet)
+        // Check if owner is in the room
+        let ownerInRoom = currentPlayers.contains { $0.id == roomOwnerId }
+        
+        // Track if owner was EVER present
+        if ownerInRoom {
+            ownerWasEverPresent = true
+        }
+        
+        // Check if owner LEFT (only if they were present before and now they're not)
         if gameStatus == "waiting" && !isOwner && !hasShownHostLeftAlert {
-            let ownerInRoom = currentPlayers.contains { $0.id == roomOwnerId }
+            let hostActuallyLeft = ownerWasEverPresent && !ownerInRoom && !roomOwnerId.isEmpty
             
-            // Check if roomOwnerId is empty OR owner not in room
-            if roomOwnerId.isEmpty || !ownerInRoom {
+            if hostActuallyLeft {
                 hasShownHostLeftAlert = true
                 
-                // First show waiting for host background
                 gameView.startOverlay.isHidden = true
                 gameView.showWaitingForHost()
                 
-                // Then show alert on top with slight delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     self.showAlert(message: "Host has left the room") {
                         self.listener?.remove()
                         
-                        // Remove self from room
                         let db = Firestore.firestore()
                         db.collection("lobby").document(self.roomId).getDocument { snapshot, error in
                             guard var players = snapshot?.data()?["players"] as? [[String: Any]] else {
@@ -198,7 +264,6 @@ class GameScreenViewController: UIViewController {
         
         // Check if owner left during game
         if gameStatus == "in_progress" && newPlayerCount == 1 && !isOwner {
-            // You're the only one left - end game
             timer?.invalidate()
             gameView.hideTimer()
             showAlert(message: "Other players have left. You win!") {
@@ -210,47 +275,34 @@ class GameScreenViewController: UIViewController {
         
         // Check if only 1 player remains during game
         if gameStatus == "in_progress" && newPlayerCount == 1 {
-            // End game immediately
             timer?.invalidate()
             gameView.hideTimer()
             
             let db = Firestore.firestore()
             db.collection("lobby").document(self.roomId).updateData([
                 "gameStatus": "completed"
-            ]) { _ in
-                // Listener will handle navigation to leaderboard
-            }
+            ]) { _ in }
             return
         }
         
         // Detect if someone left during game
         if gameStatus == "in_progress" && previousPlayerCount > 0 {
-            // Check who left
             let playersWhoLeft = previousPlayerIds.subtracting(newPlayerIds)
             
             if !playersWhoLeft.isEmpty {
-                // Someone left!
                 showTemporaryBanner("Player left the game")
                 
-                // Check if it was the current player's turn
                 if currentPlayers.count > 0 {
                     let currentPlayerIndex = currentPlayerTurnIndex % max(previousPlayerCount, 1)
-                    
-                    // Get who SHOULD be playing now based on old player count
-                    // If that player is gone, skip immediately
                     var needsSkip = false
                     
-                    // Simple check: if current turn player isn't in new player list, skip
                     if currentPlayerIndex < currentPlayers.count {
-                        // Player is still there, all good
+                        // Player is still there
                     } else {
-                        // Turn index is out of bounds, need to skip
                         needsSkip = true
                     }
                     
-                    // Or check if the player at current turn index just left
-                    for leftPlayerId in playersWhoLeft {
-                        // If it might have been their turn, skip
+                    for _ in playersWhoLeft {
                         needsSkip = true
                         break
                     }
@@ -260,7 +312,6 @@ class GameScreenViewController: UIViewController {
                         timer?.invalidate()
                         gameView.hideTimer()
                         
-                        // Skip to next valid player immediately
                         GameManager.shared.moveToNextTurn(
                             roomId: roomId,
                             questionIds: currentQuestionIds,
@@ -301,7 +352,6 @@ class GameScreenViewController: UIViewController {
         switch gameStatus {
         case "waiting":
             if isOwner {
-                // Owner sees start overlay with button
                 gameView.hideWaitingForHost()
                 gameView.showStartOverlay()
                 
@@ -315,7 +365,6 @@ class GameScreenViewController: UIViewController {
                     gameView.startGameBtn.alpha = 0.5
                 }
             } else {
-                // Non-owner sees waiting overlay (no button)
                 gameView.startOverlay.isHidden = true
                 gameView.showWaitingForHost()
             }
@@ -344,6 +393,8 @@ class GameScreenViewController: UIViewController {
         }
     }
     
+    // MARK: - UI Updates
+    
     func updatePlayerCards() {
         let allCards = [gameView.playerCard1, gameView.playerCard2, gameView.playerCard3, gameView.playerCard4]
         
@@ -371,30 +422,21 @@ class GameScreenViewController: UIViewController {
         }
     }
     
-    // MARK: - Turn Management
-    
     func checkTurn() {
         guard currentPlayers.count > 0 else { return }
         
         let currentPlayerIndex = currentPlayerTurnIndex % currentPlayers.count
         let currentPlayer = currentPlayers[currentPlayerIndex]
         
-        // Start timer for everyone to see
         startTimer()
         
         if currentPlayerIndex == myPlayerIndex {
-            // My turn!
             enableInput()
             gameView.showTurnIndicator("YOUR TURN")
         } else {
-            // Someone else's turn
             gameView.showTurnIndicator("\(currentPlayer.name)'s Turn")
             disableInput()
         }
-    }
-    
-    func autoSkipToNextPlayer() {
-        // This function is no longer needed - timeout monitor handles it
     }
     
     func enableInput() {
@@ -419,7 +461,7 @@ class GameScreenViewController: UIViewController {
         gameView.hideShakeHint()
     }
     
-    // MARK: - Timer (Shows for ALL players)
+    // MARK: - Timer
     
     func startTimer() {
         timeRemaining = 30
@@ -446,14 +488,12 @@ class GameScreenViewController: UIViewController {
         let currentPlayerIndex = currentPlayerTurnIndex % currentPlayers.count
         
         if currentPlayerIndex == myPlayerIndex {
-            // It was MY turn - auto submit, NO POPUP
             disableInput()
             submitAnswerToFirestore("Timeout")
         }
-        // If it's someone else's turn, do nothing - GameManager will handle auto-skip
     }
     
-    // MARK: - Actions
+    // MARK: - Game Actions
     
     @objc func startGame() {
         guard currentPlayers.count >= 2 else {
@@ -465,6 +505,9 @@ class GameScreenViewController: UIViewController {
             showAlert(message: "Only the host can start the game")
             return
         }
+        
+        // Check network before starting
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         
         gameView.startGameBtn.isEnabled = false
         
@@ -489,6 +532,9 @@ class GameScreenViewController: UIViewController {
             showAlert(message: "Please enter an answer")
             return
         }
+        
+        // Check network before submitting
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         
         timer?.invalidate()
         gameView.hideTimer()
@@ -533,19 +579,20 @@ class GameScreenViewController: UIViewController {
         }
     }
     
+    // MARK: - Navigation
+    
     func navigateToLeaderboard() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                guard let self = self else { return }
-                
-                // Remove listener to freeze scores - no more live updates
-                self.listener?.remove()
-                
-                let leaderboardVC = LeaderboardViewController()
-                leaderboardVC.roomId = self.roomId
-                leaderboardVC.players = self.currentPlayers  // Frozen snapshot of final scores
-                leaderboardVC.myPlayerId = self.myPlayerId
-                self.navigationController?.pushViewController(leaderboardVC, animated: true)
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            
+            self.listener?.remove()
+            
+            let leaderboardVC = LeaderboardViewController()
+            leaderboardVC.roomId = self.roomId
+            leaderboardVC.players = self.currentPlayers
+            leaderboardVC.myPlayerId = self.myPlayerId
+            self.navigationController?.pushViewController(leaderboardVC, animated: true)
+        }
     }
     
     @objc func leaveGame() {
@@ -561,6 +608,9 @@ class GameScreenViewController: UIViewController {
     func handleLeave() {
         listener?.remove()
         
+        // Cancel any pending notifications when explicitly leaving
+        LocalNotificationManager.shared.cancelGameNotification()
+        
         let db = Firestore.firestore()
         let roomRef = db.collection("lobby").document(roomId)
         
@@ -568,7 +618,6 @@ class GameScreenViewController: UIViewController {
             guard let self = self,
                   let data = snapshot?.data(),
                   var players = data["players"] as? [[String: Any]] else {
-                // Just go back, no popup
                 DispatchQueue.main.async {
                     self?.navigationController?.setViewControllers([LobbyViewController()], animated: true)
                 }
@@ -579,10 +628,8 @@ class GameScreenViewController: UIViewController {
             let ownerId = data["createdBy"] as? String ?? ""
             
             if gameStatus == "waiting" {
-                // Before game starts
                 if ownerId == self.myPlayerId {
-                    // Owner leaving - REMOVE SELF, clear others
-                    players.removeAll()  // Clear everyone including owner
+                    players.removeAll()
                     
                     roomRef.updateData(["players": players]) { _ in
                         DispatchQueue.main.async {
@@ -590,7 +637,6 @@ class GameScreenViewController: UIViewController {
                         }
                     }
                 } else {
-                    // Non-owner leaving
                     players.removeAll { $0["id"] as? String == self.myPlayerId }
                     
                     roomRef.updateData(["players": players]) { _ in
@@ -600,13 +646,10 @@ class GameScreenViewController: UIViewController {
                     }
                 }
             } else {
-                // During game
                 if ownerId == self.myPlayerId {
-                    // Owner leaving during game
                     players.removeAll { $0["id"] as? String == self.myPlayerId }
                     
                     if !players.isEmpty {
-                        // Promote 2nd player to owner
                         let newOwnerId = players[0]["id"] as? String ?? ""
                         
                         roomRef.updateData([
@@ -618,7 +661,6 @@ class GameScreenViewController: UIViewController {
                             }
                         }
                     } else {
-                        // Last player - delete room
                         GameManager.shared.deleteRoom(roomId: self.roomId) { _, _ in
                             DispatchQueue.main.async {
                                 self.navigationController?.setViewControllers([LobbyViewController()], animated: true)
@@ -626,7 +668,6 @@ class GameScreenViewController: UIViewController {
                         }
                     }
                 } else {
-                    // Non-owner leaving during game
                     players.removeAll { $0["id"] as? String == self.myPlayerId }
                     
                     if players.isEmpty {
@@ -647,7 +688,24 @@ class GameScreenViewController: UIViewController {
         }
     }
     
+    // MARK: - Alerts & Banners
+    
     func showAlert(message: String, completion: (() -> Void)? = nil) {
+        // Don't show error alerts if it's a network issue (NetworkManager handles it)
+        if !NetworkManager.shared.isConnected {
+            let lowercased = message.lowercased()
+            if lowercased.contains("error") || lowercased.contains("failed") || lowercased.contains("network") {
+                print("Suppressed alert during network outage: \(message)")
+                return
+            }
+        }
+        
+        // Don't show if already presenting something
+        if self.presentedViewController != nil {
+            print("Alert suppressed (already presenting): \(message)")
+            return
+        }
+        
         let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default) { _ in
             completion?()
@@ -656,9 +714,8 @@ class GameScreenViewController: UIViewController {
     }
     
     func showTemporaryBanner(_ message: String) {
-        // Create temporary banner
         let banner = UIView()
-        banner.backgroundColor = UIColor(red: 0.95, green: 0.35, blue: 0.35, alpha: 0.85)  // Reduced from 0.95
+        banner.backgroundColor = UIColor(red: 0.95, green: 0.35, blue: 0.35, alpha: 0.85)
         banner.layer.cornerRadius = 12
         banner.translatesAutoresizingMaskIntoConstraints = false
         
@@ -685,7 +742,6 @@ class GameScreenViewController: UIViewController {
             label.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -16)
         ])
         
-        // Animate in
         banner.alpha = 0
         banner.transform = CGAffineTransform(translationX: 0, y: -20)
         
@@ -693,7 +749,6 @@ class GameScreenViewController: UIViewController {
             banner.alpha = 1
             banner.transform = .identity
         } completion: { _ in
-            // Auto-dismiss after 2.5 seconds
             UIView.animate(withDuration: 0.4, delay: 2.5) {
                 banner.alpha = 0
                 banner.transform = CGAffineTransform(translationX: 0, y: -20)

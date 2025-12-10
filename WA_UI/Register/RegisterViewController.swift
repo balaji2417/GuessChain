@@ -23,7 +23,7 @@ class RegisterViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        NetworkManager.shared.observe(from: self)
         registerScreen.registerButton.addTarget(self, action: #selector(registerButtonTapped), for: .touchUpInside)
         registerScreen.loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
     }

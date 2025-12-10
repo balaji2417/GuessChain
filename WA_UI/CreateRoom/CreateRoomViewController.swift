@@ -20,7 +20,7 @@ class CreateRoomViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Do any additional setup after loading the view.
+        NetworkManager.shared.observe(from: self)
         if Auth.auth().currentUser != nil {
             getUserName ()
         }
@@ -39,6 +39,7 @@ class CreateRoomViewController: UIViewController {
      }
      */
     @objc func createButtonTapped() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         guard let roomName = createRoomView.textFieldRoomName.text, !roomName.isEmpty else {
             showAlert(message: "Please enter a room name")
             return

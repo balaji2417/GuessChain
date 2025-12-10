@@ -5,8 +5,6 @@
 //  Created by Swetha Shankara Raman on 11/17/25.
 //
 
-
-
 import UIKit
 
 class LeaderboardView: UIView {
@@ -143,6 +141,7 @@ class LeaderboardView: UIView {
         card.layer.shadowOffset = CGSize(width: 0, height: 4)
         card.layer.shadowRadius = 8
         card.layer.shadowOpacity = 0.15
+        card.clipsToBounds = false
         card.translatesAutoresizingMaskIntoConstraints = false
         return card
     }
@@ -159,9 +158,13 @@ class LeaderboardView: UIView {
     func createNameLabel() -> UILabel {
         let label = UILabel()
         label.text = ""
-        label.font = UIFont(name: "Helvetica-Bold", size: 15) ?? .systemFont(ofSize: 15, weight: .bold)
+        label.font = UIFont(name: "Helvetica-Bold", size: 13) ?? .systemFont(ofSize: 13, weight: .bold)
         label.textColor = .white
         label.textAlignment = .center
+        label.numberOfLines = 2
+        label.lineBreakMode = .byTruncatingTail
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.7
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }
@@ -219,46 +222,52 @@ class LeaderboardView: UIView {
             podiumContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             podiumContainer.heightAnchor.constraint(equalToConstant: 160),
             
+            // First place card
             firstPlaceCard.centerXAnchor.constraint(equalTo: podiumContainer.centerXAnchor),
             firstPlaceCard.topAnchor.constraint(equalTo: podiumContainer.topAnchor),
             firstPlaceCard.widthAnchor.constraint(equalToConstant: 100),
             firstPlaceCard.heightAnchor.constraint(equalToConstant: 130),
             
-            firstPlaceLabel.topAnchor.constraint(equalTo: firstPlaceCard.topAnchor, constant: 14),
+            firstPlaceLabel.topAnchor.constraint(equalTo: firstPlaceCard.topAnchor, constant: 10),
             firstPlaceLabel.centerXAnchor.constraint(equalTo: firstPlaceCard.centerXAnchor),
             
-            firstNameLabel.centerXAnchor.constraint(equalTo: firstPlaceCard.centerXAnchor),
-            firstNameLabel.centerYAnchor.constraint(equalTo: firstPlaceCard.centerYAnchor),
+            firstNameLabel.topAnchor.constraint(equalTo: firstPlaceLabel.bottomAnchor, constant: 4),
+            firstNameLabel.leadingAnchor.constraint(equalTo: firstPlaceCard.leadingAnchor, constant: 6),
+            firstNameLabel.trailingAnchor.constraint(equalTo: firstPlaceCard.trailingAnchor, constant: -6),
             
-            firstScoreLabel.bottomAnchor.constraint(equalTo: firstPlaceCard.bottomAnchor, constant: -14),
+            firstScoreLabel.bottomAnchor.constraint(equalTo: firstPlaceCard.bottomAnchor, constant: -10),
             firstScoreLabel.centerXAnchor.constraint(equalTo: firstPlaceCard.centerXAnchor),
             
+            // Second place card
             secondPlaceCard.trailingAnchor.constraint(equalTo: firstPlaceCard.leadingAnchor, constant: -10),
             secondPlaceCard.topAnchor.constraint(equalTo: podiumContainer.topAnchor, constant: 30),
             secondPlaceCard.widthAnchor.constraint(equalToConstant: 90),
             secondPlaceCard.heightAnchor.constraint(equalToConstant: 110),
             
-            secondPlaceLabel.topAnchor.constraint(equalTo: secondPlaceCard.topAnchor, constant: 12),
+            secondPlaceLabel.topAnchor.constraint(equalTo: secondPlaceCard.topAnchor, constant: 8),
             secondPlaceLabel.centerXAnchor.constraint(equalTo: secondPlaceCard.centerXAnchor),
             
-            secondNameLabel.centerXAnchor.constraint(equalTo: secondPlaceCard.centerXAnchor),
-            secondNameLabel.centerYAnchor.constraint(equalTo: secondPlaceCard.centerYAnchor),
+            secondNameLabel.topAnchor.constraint(equalTo: secondPlaceLabel.bottomAnchor, constant: 2),
+            secondNameLabel.leadingAnchor.constraint(equalTo: secondPlaceCard.leadingAnchor, constant: 6),
+            secondNameLabel.trailingAnchor.constraint(equalTo: secondPlaceCard.trailingAnchor, constant: -6),
             
-            secondScoreLabel.bottomAnchor.constraint(equalTo: secondPlaceCard.bottomAnchor, constant: -12),
+            secondScoreLabel.bottomAnchor.constraint(equalTo: secondPlaceCard.bottomAnchor, constant: -8),
             secondScoreLabel.centerXAnchor.constraint(equalTo: secondPlaceCard.centerXAnchor),
             
+            // Third place card
             thirdPlaceCard.leadingAnchor.constraint(equalTo: firstPlaceCard.trailingAnchor, constant: 10),
             thirdPlaceCard.topAnchor.constraint(equalTo: podiumContainer.topAnchor, constant: 50),
             thirdPlaceCard.widthAnchor.constraint(equalToConstant: 90),
             thirdPlaceCard.heightAnchor.constraint(equalToConstant: 90),
             
-            thirdPlaceLabel.topAnchor.constraint(equalTo: thirdPlaceCard.topAnchor, constant: 10),
+            thirdPlaceLabel.topAnchor.constraint(equalTo: thirdPlaceCard.topAnchor, constant: 6),
             thirdPlaceLabel.centerXAnchor.constraint(equalTo: thirdPlaceCard.centerXAnchor),
             
-            thirdNameLabel.centerXAnchor.constraint(equalTo: thirdPlaceCard.centerXAnchor),
-            thirdNameLabel.centerYAnchor.constraint(equalTo: thirdPlaceCard.centerYAnchor),
+            thirdNameLabel.topAnchor.constraint(equalTo: thirdPlaceLabel.bottomAnchor, constant: 0),
+            thirdNameLabel.leadingAnchor.constraint(equalTo: thirdPlaceCard.leadingAnchor, constant: 6),
+            thirdNameLabel.trailingAnchor.constraint(equalTo: thirdPlaceCard.trailingAnchor, constant: -6),
             
-            thirdScoreLabel.bottomAnchor.constraint(equalTo: thirdPlaceCard.bottomAnchor, constant: -10),
+            thirdScoreLabel.bottomAnchor.constraint(equalTo: thirdPlaceCard.bottomAnchor, constant: -6),
             thirdScoreLabel.centerXAnchor.constraint(equalTo: thirdPlaceCard.centerXAnchor),
             
             playersContainer.topAnchor.constraint(equalTo: podiumContainer.bottomAnchor, constant: 24),
@@ -287,6 +296,8 @@ class LeaderboardView: UIView {
         rankLabel.font = UIFont(name: "Menlo-Bold", size: 18) ?? .monospacedSystemFont(ofSize: 18, weight: .bold)
         rankLabel.textColor = UIColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 1.0)
         rankLabel.translatesAutoresizingMaskIntoConstraints = false
+        rankLabel.setContentHuggingPriority(.required, for: .horizontal)
+        rankLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         card.addSubview(rankLabel)
         
         let nameLabel = UILabel()
@@ -294,24 +305,36 @@ class LeaderboardView: UIView {
         nameLabel.font = UIFont(name: "Helvetica-Bold", size: 17) ?? .systemFont(ofSize: 17, weight: .bold)
         nameLabel.textColor = UIColor(red: 0.25, green: 0.25, blue: 0.28, alpha: 1.0)
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        nameLabel.numberOfLines = 1
+        nameLabel.lineBreakMode = .byTruncatingTail
+        nameLabel.adjustsFontSizeToFitWidth = true
+        nameLabel.minimumScaleFactor = 0.75
+        nameLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        nameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         card.addSubview(nameLabel)
         
         let scoreLabel = UILabel()
         scoreLabel.text = "\(score)"
         scoreLabel.font = UIFont(name: "Menlo-Bold", size: 20) ?? .monospacedSystemFont(ofSize: 20, weight: .bold)
         scoreLabel.textColor = UIColor(red: 0.4, green: 0.75, blue: 0.6, alpha: 1.0)
+        scoreLabel.textAlignment = .right
         scoreLabel.translatesAutoresizingMaskIntoConstraints = false
+        scoreLabel.setContentHuggingPriority(.required, for: .horizontal)
+        scoreLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
         card.addSubview(scoreLabel)
         
         NSLayoutConstraint.activate([
-            rankLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 20),
+            rankLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
             rankLabel.centerYAnchor.constraint(equalTo: card.centerYAnchor),
+            rankLabel.widthAnchor.constraint(equalToConstant: 40),
             
-            nameLabel.leadingAnchor.constraint(equalTo: rankLabel.trailingAnchor, constant: 20),
+            nameLabel.leadingAnchor.constraint(equalTo: rankLabel.trailingAnchor, constant: 12),
             nameLabel.centerYAnchor.constraint(equalTo: card.centerYAnchor),
+            nameLabel.trailingAnchor.constraint(equalTo: scoreLabel.leadingAnchor, constant: -12),
             
-            scoreLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -20),
-            scoreLabel.centerYAnchor.constraint(equalTo: card.centerYAnchor)
+            scoreLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            scoreLabel.centerYAnchor.constraint(equalTo: card.centerYAnchor),
+            scoreLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 50)
         ])
         
         playersContainer.addArrangedSubview(card)

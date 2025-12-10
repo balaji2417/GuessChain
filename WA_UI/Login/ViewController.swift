@@ -13,10 +13,12 @@ class ViewController: UIViewController {
     var player: Player = Player(name: "", id: "")
     
     override func loadView() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         if Auth.auth().currentUser != nil {
             getUserName { [weak self] success in
                 DispatchQueue.main.async {
                     if success && !(self?.player.name.isEmpty ?? true) {
+                        
                         // User is logged in and has a name, go to Welcome screen
                         self?.navigationController?.setViewControllers([WelcomeViewController()], animated: false)
                     }
@@ -29,7 +31,8 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Check if user is already logged in
+
+        NetworkManager.shared.observe(from: self)
         
         
         var registerButton = firstScreen.registerButton
@@ -40,10 +43,12 @@ class ViewController: UIViewController {
     }
     
     @objc func registerButtonTapped() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         navigationController?.pushViewController(RegisterViewController(), animated: true)
     }
     
     @objc func loginButtonTapped() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         if let uwEmail = firstScreen.emailTextField.text {
             if let uwPassword = firstScreen.passwordTextField.text {
                 loginApi(uwEmail, uwPassword)
@@ -52,6 +57,7 @@ class ViewController: UIViewController {
     }
 
     func navigateToHome() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         navigationController?.setViewControllers([WelcomeViewController()], animated: true)
     }
     

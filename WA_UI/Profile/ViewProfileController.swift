@@ -25,7 +25,7 @@ class ViewProfileController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        NetworkManager.shared.observe(from: self)
         title = "Profile"
         
         let editButton = UIBarButtonItem(
@@ -102,6 +102,7 @@ class ViewProfileController: UIViewController {
     }
     
     @objc func onLogoutTapped() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         let alert = UIAlertController(
             title: "Logout",
             message: "Are you sure you want to logout?",

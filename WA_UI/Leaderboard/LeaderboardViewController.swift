@@ -25,7 +25,7 @@ class LeaderboardViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        NetworkManager.shared.observe(from: self)
         title = "Results"
         navigationItem.hidesBackButton = true
         

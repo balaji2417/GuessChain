@@ -27,6 +27,7 @@ class LobbyViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         getUserName()
+        NetworkManager.shared.observe(from: self)
         listener = listenToAllLobbies()
         
         lobbyView.tableViewRooms.delegate = self
@@ -79,6 +80,7 @@ class LobbyViewController: UIViewController {
     }
     
     @objc func logoutTapped() {
+        guard NetworkManager.shared.checkAndAlert(on: self) else { return }
         let alert = UIAlertController(
             title: "Logout",
             message: "Are you sure you want to logout?",
